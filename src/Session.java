@@ -24,48 +24,76 @@ public class Session {
         return this.id;
     }
 
-    public long getLastTouchedTime() {
+    public synchronized long getLastTouchedTime() {
         return this.lastTouchedTime;
     }
 
-    public void touch() {
+    public synchronized void touch() {
         this.lastTouchedTime = System.currentTimeMillis();
     }
 
-    public void registerNewOwner(ClientConnexion owner) {
+    public synchronized void registerNewOwner(ClientConnexion owner) {
         this.touch();
         this.owner = owner;
+        notifyAll();
     }
 
-    public void unregisterOwner() {
+    public synchronized void unregisterOwner() {
         this.touch();
         this.owner = this.visitor;
         this.visitor = null;
+        notifyAll();
     }
 
-    public ClientConnexion getOwner() {
+    public synchronized ClientConnexion getOwner() {
         return owner;
     }
 
-    public ClientConnexion getVisitor() {
+    public synchronized ClientConnexion getVisitor() {
         return visitor;
     }
 
-    public void registerVisitor(ClientConnexion visitor) {
+    public synchronized void registerVisitor(ClientConnexion visitor) {
         this.touch();
         this.visitor = visitor;
+        notifyAll();
     }
 
-    public void unregisterVisitor() {
+    public synchronized void unregisterVisitor() {
         this.touch();
         this.visitor = null;
+        notifyAll();
     }
 
-    public boolean isFull() {
+    public synchronized void unregisterClient(ClientConnexion client) {
+        this.touch();
+        if (client == owner) {
+            this.unregisterOwner();
+        }
+        if (client == visitor) {
+            this.unregisterVisitor();
+        }
+    }
+
+    public synchronized ClientConnexion getPeer(ClientConnexion client) {
+        if (client == owner) {
+            return visitor;
+        }
+        if (client == visitor) {
+            return owner;
+        }
+        return null;
+    }
+
+    public synchronized boolean hasClient(ClientConnexion client) {
+        return client == owner || client == visitor;
+    }
+
+    public synchronized boolean isFull() {
         return this.owner != null && this.visitor != null;
     }
 
-    public boolean isOutdated() {
+    public synchronized boolean isOutdated() {
         return System.currentTimeMillis() - this.lastTouchedTime > OUTDATED_AFTER_MS;
     }
 
