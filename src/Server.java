@@ -18,6 +18,9 @@ public class Server {
             serverSocket = new ServerSocket(port);
             System.out.println("Server listening on port " + port);
 
+            Thread cmdLineThread = new Thread(new Server_command_line(sessionManager));
+            cmdLineThread.start();
+
             while (true) {
                 try {
                     Socket clientSocket = serverSocket.accept();

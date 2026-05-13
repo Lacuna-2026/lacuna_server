@@ -41,14 +41,12 @@ public class Session {
     public synchronized void registerNewOwner(ClientConnexion owner) {
         this.touch();
         this.owner = owner;
-        notifyAll();
     }
 
     public synchronized void unregisterOwner() {
         this.touch();
         this.owner = this.visitor;
         this.visitor = null;
-        notifyAll();
     }
 
     public synchronized ClientConnexion getOwner() {
@@ -62,13 +60,11 @@ public class Session {
     public synchronized void registerVisitor(ClientConnexion visitor) {
         this.touch();
         this.visitor = visitor;
-        notifyAll();
     }
 
     public synchronized void unregisterVisitor() {
         this.touch();
         this.visitor = null;
-        notifyAll();
     }
 
     public synchronized void unregisterClient(ClientConnexion client) {
@@ -101,6 +97,17 @@ public class Session {
 
     public synchronized boolean isPrv() {
         return this.prv;
+    }
+
+    public synchronized long getMinutesUntilOutdated() {
+        long elapsedTime = System.currentTimeMillis() - this.lastTouchedTime;
+        long remainingTime = OUTDATED_AFTER_MS - elapsedTime;
+
+        if (remainingTime <= 0) {
+            return 0;
+        }
+
+        return (remainingTime + 59999) / 60000;
     }
 
     public synchronized boolean isOutdated() {

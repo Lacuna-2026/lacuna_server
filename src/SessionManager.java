@@ -41,6 +41,11 @@ public class SessionManager {
         return availableSessions;
     }
 
+    public List<Session> listSessions() {
+        cleanupOutdatedSessions();
+        return new ArrayList<>(sessions.values());
+    }
+
     public Session getSession(String id) {
         if (id == null) {
             return null;
