@@ -14,10 +14,16 @@ public class Session {
     private long lastTouchedTime;
     private ClientConnexion owner;
     private ClientConnexion visitor;
+    private boolean prv = false;
 
     public Session() {
+        this(false);
+    }
+
+    public Session(boolean prv) {
         this.id = generateId();
         this.lastTouchedTime = System.currentTimeMillis();
+        this.prv = prv;
     }
 
     public String getId() {
@@ -91,6 +97,10 @@ public class Session {
 
     public synchronized boolean isFull() {
         return this.owner != null && this.visitor != null;
+    }
+
+    public synchronized boolean isPrv() {
+        return this.prv;
     }
 
     public synchronized boolean isOutdated() {

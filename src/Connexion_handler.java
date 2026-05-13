@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
 
 public class Connexion_handler implements Runnable {
@@ -61,6 +63,8 @@ public class Connexion_handler implements Runnable {
         switch (command) {
             case "PING":
                 return handlePing(parts, out);
+            case "LIST":
+                return handleList(parts, out);
             case "CREAT":
                 return handleCreate(parts, in, out);
             case "JOIN":
@@ -81,14 +85,45 @@ public class Connexion_handler implements Runnable {
         return false;
     }
 
-    private boolean handleCreate(String[] parts, BufferedReader in, PrintWriter out) {
-        if (parts.length != 2) {
+    private boolean handleList(String[] parts, PrintWriter out) {
+        if (parts.length != 1) {
             out.println("BAD 400");
             return false;
         }
 
+        List<String> sessionLines = new ArrayList<>();
+
+        for (Session session : this.sessionManager.listAvailableSessions()) {
+            synchronized (session) {
+                ClientConnexion owner = session.getOwner();
+
+                if (!session.isFull()
+                        && !session.isPrv()
+                        && !session.isOutdated()) {
+                    sessionLines.add(owner.getClientName() + " " + session.getId());
+                }
+            }
+        }
+
+        out.println(sessionLines.size());
+
+        for (String sessionLine : sessionLines) {
+            out.println(sessionLine);
+        }
+
+        return false;
+    }
+
+    private boolean handleCreate(String[] parts, BufferedReader in, PrintWriter out) {
+        if (parts.length < 2 || parts.length > 3) {
+            out.println("BAD 400");
+            return false;
+        }
+
+        boolean prv = parts.length == 3 && !"0".equals(parts[2]);
+
         currentClient = new ClientConnexion(this.clientSocket, parts[1], in, out);
-        currentSession = this.sessionManager.createSession(currentClient);
+        currentSession = this.sessionManager.createSession(currentClient, prv);
         out.println("OK " + currentSession.getId());
         return true;
     }
