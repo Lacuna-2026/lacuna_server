@@ -144,13 +144,24 @@ public class Connexion_handler implements Runnable {
 
         ClientConnexion client = new ClientConnexion(this.clientSocket, parts[1], in, out);
 
+        ClientConnexion owner;
+
         synchronized (session) {
             if (session.getOwner() == null || session.isFull()) {
                 out.println("BAD 405");
                 return false;
             }
 
+            owner = session.getOwner();
             session.registerVisitor(client);
+        }
+
+        if (!owner.sendToClient("JOINED " + client.getClientName())) {
+            synchronized (session) {
+                session.unregisterVisitor();
+            }
+            out.println("BAD 405");
+            return false;
         }
 
         currentClient = client;
